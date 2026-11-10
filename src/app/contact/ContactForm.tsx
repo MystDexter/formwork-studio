@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { site } from "@/content/site";
 import {
   BUDGETS,
@@ -12,7 +12,7 @@ import {
   type BriefErrors,
 } from "@/lib/contact";
 
-type Status =
+export type Status =
   | { kind: "idle" }
   | { kind: "sending" }
   | { kind: "sent" }
@@ -34,7 +34,15 @@ function mailtoFor(b: Brief) {
   return `mailto:${site.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(briefToText(b))}`;
 }
 
-export function ContactForm() {
+export function ContactForm({
+  onChange,
+  beforeSubmit,
+}: {
+  /** Reports every change, so the page can draw the brief as it's written. */
+  onChange?: (brief: Brief, status: Status) => void;
+  /** Rendered just above the send button. */
+  beforeSubmit?: React.ReactNode;
+} = {}) {
   const [brief, setBrief] = useState<Brief>(EMPTY);
   const [errors, setErrors] = useState<BriefErrors>({});
   const [attempted, setAttempted] = useState(false);
@@ -42,6 +50,10 @@ export function ContactForm() {
   const summaryRef = useRef<HTMLDivElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
   const honeypot = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    onChange?.(brief, status);
+  }, [brief, status, onChange]);
 
   const update = <K extends keyof Brief>(key: K, value: Brief[K]) => {
     const next = { ...brief, [key]: value };
@@ -332,6 +344,8 @@ export function ContactForm() {
           />
         </div>
       </div>
+
+      {beforeSubmit}
 
       <div className="mt-12 flex flex-col items-start gap-5 sm:flex-row sm:items-center">
         <button

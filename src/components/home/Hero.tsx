@@ -16,13 +16,29 @@ type Props = { blueprint?: boolean; sizeNoteRef?: React.Ref<HTMLSpanElement> };
  * The hero is rendered twice with identical layout: once finished, once as its own
  * technical drawing. The drawing is only visible through the lens, so the visitor
  * literally sees the engineering underneath the polish.
+ *
+ * The finished layer builds itself in four acts, all in CSS so nothing waits for
+ * JavaScript: setting out (crop marks, guides, dimension lines), formwork (the letter
+ * outlines trace themselves), the pour (ink rises inside the letters from the
+ * baseline) and the strike (the formwork lifts away).
  */
 function HeroContent({ blueprint = false, sizeNoteRef }: Props) {
   const Title = blueprint ? "div" : "h1";
   return (
     <div className={`hero-layer frame ${blueprint ? "is-blueprint" : ""}`}>
       <div className="hero-type">
-        <Title className="hero-title display" {...(blueprint ? {} : { id: "hero-title" })}>
+        {!blueprint && (
+          <span className="crop-marks" aria-hidden="true">
+            <span data-c="tl" />
+            <span data-c="tr" />
+            <span data-c="bl" />
+            <span data-c="br" />
+          </span>
+        )}
+        <Title
+          className="hero-title display"
+          {...(blueprint ? {} : { id: "hero-title" })}
+        >
           {LINES.map((line, i) => (
             <span
               key={line.text}
@@ -31,18 +47,47 @@ function HeroContent({ blueprint = false, sizeNoteRef }: Props) {
               style={{ "--i": i } as React.CSSProperties}
             >
               <span className="guide" data-g="cap" aria-hidden="true">
-                {blueprint && i === 0 && <span className="guide-label">Cap height 0.686 em</span>}
+                {blueprint && i === 0 && (
+                  <span className="guide-label">Cap height 0.686 em</span>
+                )}
               </span>
               <span className="guide" data-g="x" aria-hidden="true">
-                {blueprint && i === 0 && <span className="guide-label">x-height 0.526 em</span>}
+                {blueprint && i === 0 && (
+                  <span className="guide-label">x-height 0.526 em</span>
+                )}
               </span>
               <span className="guide" data-g="base" aria-hidden="true">
-                {blueprint && <span className="guide-label">Baseline {i + 1}</span>}
+                {blueprint && (
+                  <span className="guide-label">Baseline {i + 1}</span>
+                )}
               </span>
-              <span className="hero-ink">{line.text}</span>
+              <span className="hero-word">
+                <span className="hero-ink">{line.text}</span>
+                {!blueprint && (
+                  <>
+                    <span className="pour" aria-hidden="true">
+                      <span>{line.text}</span>
+                    </span>
+                    <svg className="trace" aria-hidden="true" focusable="false">
+                      <text x="0" y="0.794em">
+                        {line.text}
+                      </text>
+                    </svg>
+                    <span className="dim" aria-hidden="true">
+                      <span className="dim-label tnum" data-dim={i}>
+                        &nbsp;
+                      </span>
+                    </span>
+                  </>
+                )}
+              </span>
               {blueprint && i === 2 && (
-                <span className="bp-note" style={{ left: "0", top: "calc(100% + 0.6rem)" }}>
-                  Archivo, weight 800, width 112%, <span ref={sizeNoteRef}>fluid</span>
+                <span
+                  className="bp-note"
+                  style={{ left: "0", top: "calc(100% + 0.6rem)" }}
+                >
+                  Archivo, weight 800, width 112%,{" "}
+                  <span ref={sizeNoteRef}>fluid</span>
                 </span>
               )}
             </span>
@@ -50,25 +95,43 @@ function HeroContent({ blueprint = false, sizeNoteRef }: Props) {
         </Title>
 
         <div className="hero-aside">
-          <p className="lede hero-lede" style={{ "--i": 0 } as React.CSSProperties}>
+          <p
+            className="lede hero-lede"
+            style={{ "--i": 0 } as React.CSSProperties}
+          >
             {blueprint && (
               <span className="bp-note" style={{ top: "-1.5rem", left: 0 }}>
                 Body copy, Newsreader 380, measure 26 rem
               </span>
             )}
-            {site.name} is a design and engineering studio. We turn ambitious ideas into websites and
-            products that are fast, accessible and hard to forget.
+            {site.name} is a design and engineering studio. We turn ambitious
+            ideas into websites and products that are fast, accessible and hard
+            to forget.
           </p>
-          <div className="hero-actions flex flex-wrap gap-x-7 gap-y-4" style={{ "--i": 1 } as React.CSSProperties}>
+          <div
+            className="hero-actions flex flex-wrap gap-x-7 gap-y-4"
+            style={{ "--i": 1 } as React.CSSProperties}
+          >
             {blueprint && (
-              <span className="bp-note" style={{ top: "calc(100% + 0.5rem)", left: 0 }}>
+              <span
+                className="bp-note"
+                style={{ top: "calc(100% + 0.5rem)", left: 0 }}
+              >
                 Primary action, 48 px minimum target
               </span>
             )}
-            <Link href="/contact#brief" className="btn" tabIndex={blueprint ? -1 : undefined}>
+            <Link
+              href="/contact#brief"
+              className="btn"
+              tabIndex={blueprint ? -1 : undefined}
+            >
               Start a project
             </Link>
-            <Link href="/work" className="label link-draw text-base" tabIndex={blueprint ? -1 : undefined}>
+            <Link
+              href="/work"
+              className="label link-draw text-base"
+              tabIndex={blueprint ? -1 : undefined}
+            >
               See the work
             </Link>
           </div>
@@ -97,7 +160,9 @@ function HeroContent({ blueprint = false, sizeNoteRef }: Props) {
           </div>
         </dl>
         <p className="label mr-auto hidden max-w-[15rem] self-end text-[0.8rem] lg:block">
-          {blueprint ? "Lens: reveals the drawing beneath the build." : "Move your cursor over the page to see how it's built."}
+          {blueprint
+            ? "Lens: reveals the drawing beneath the build."
+            : "Move your cursor over the page to see how it's built."}
         </p>
         <div className="scroll-cue label hidden sm:flex" aria-hidden="true">
           <span className="scroll-cue-line" />
@@ -108,6 +173,10 @@ function HeroContent({ blueprint = false, sizeNoteRef }: Props) {
   );
 }
 
+const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+const easeInOut = (t: number) =>
+  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
 export function Hero() {
   const heroRef = useRef<HTMLElement>(null);
   const lensRef = useRef<HTMLDivElement>(null);
@@ -116,13 +185,54 @@ export function Hero() {
   const readoutRef = useRef<HTMLSpanElement>(null);
   const sizeNoteRef = useRef<HTMLSpanElement>(null);
 
+  // Setting out: each dimension line counts up to the measured width of its line.
+  useEffect(() => {
+    const hero = heroRef.current;
+    if (!hero) return;
+    const labels = Array.from(
+      hero.querySelectorAll<HTMLElement>("#hero-title [data-dim]"),
+    );
+    const widths = labels.map(
+      (l) =>
+        l.closest(".hero-word")?.querySelector<HTMLElement>(".hero-ink")
+          ?.offsetWidth ?? 0,
+    );
+    const fmt = (n: number) => `${Math.round(n).toLocaleString("en-GB")} px`;
+    const reduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    // The CSS entrance has been running since first paint; join it where it is.
+    const end = 1150;
+    const now = performance.now();
+    if (reduced || now >= end) {
+      labels.forEach((l, i) => (l.textContent = fmt(widths[i] ?? 0)));
+      return;
+    }
+    let raf = 0;
+    const tick = () => {
+      const t = performance.now();
+      labels.forEach((l, i) => {
+        const start = 250 + i * 100;
+        const p = Math.min(1, Math.max(0, (t - start) / (end - start)));
+        l.textContent = fmt((widths[i] ?? 0) * easeOut(p));
+      });
+      if (t < end) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  // The lens, and the hand-off: scrolling out of the hero grows the lens until the
+  // whole screen is blueprint, which is where the manifesto section begins.
   useEffect(() => {
     const hero = heroRef.current;
     const lens = lensRef.current;
     const drawing = drawingRef.current;
     const ring = ringRef.current;
     if (!hero || !lens || !drawing || !ring) return;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
 
     let w = 0;
     let h = 0;
@@ -135,6 +245,7 @@ export function Hero() {
     let lastUser = -Infinity;
     let driftStart = 0;
     let lastReadout = "";
+    let grow = 0; // 0 at rest, 1 when the lens covers the whole hero
 
     const measure = () => {
       w = hero.clientWidth;
@@ -144,11 +255,16 @@ export function Hero() {
       drawing.style.width = `${w}px`;
       drawing.style.height = `${h}px`;
       // Rest the lens over the last line of the headline, where the drawing is richest.
-      const line = hero.querySelector<HTMLElement>("#hero-title .hero-line:last-child .hero-ink");
+      const line = hero.querySelector<HTMLElement>(
+        "#hero-title .hero-line:last-child .hero-ink",
+      );
       if (line) {
         const hr = hero.getBoundingClientRect();
         const lr = line.getBoundingClientRect();
-        rest = { x: lr.left - hr.left + lr.width * 0.72, y: lr.top - hr.top + lr.height * 0.5 };
+        rest = {
+          x: lr.left - hr.left + lr.width * 0.72,
+          y: lr.top - hr.top + lr.height * 0.5,
+        };
       }
       const title = hero.querySelector<HTMLElement>("#hero-title");
       if (title && sizeNoteRef.current) {
@@ -157,12 +273,27 @@ export function Hero() {
     };
 
     // Only transforms change per frame, so this never triggers layout or repaint.
+    // The lens scales about its centre; the drawing inside counter-scales so it
+    // stays pinned to the page.
     const apply = () => {
-      const x = cur.x - radius;
-      const y = cur.y - radius;
-      lens.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
-      drawing.style.transform = `translate3d(${(-x).toFixed(1)}px, ${(-y).toFixed(1)}px, 0)`;
-      ring.style.transform = lens.style.transform;
+      const tx = cur.x - radius;
+      const ty = cur.y - radius;
+      let s = 1;
+      if (grow > 0) {
+        const far = Math.max(
+          Math.hypot(cur.x, cur.y),
+          Math.hypot(w - cur.x, cur.y),
+          Math.hypot(cur.x, h - cur.y),
+          Math.hypot(w - cur.x, h - cur.y),
+        );
+        s = 1 + (far / radius - 1 + 0.05) * easeInOut(grow);
+      }
+      lens.style.transform = `translate3d(${tx.toFixed(1)}px, ${ty.toFixed(1)}px, 0) scale(${s.toFixed(4)})`;
+      const ax = radius - (tx + radius) / s;
+      const ay = radius - (ty + radius) / s;
+      drawing.style.transform = `translate3d(${ax.toFixed(1)}px, ${ay.toFixed(1)}px, 0) scale(${(1 / s).toFixed(5)})`;
+      ring.style.transform = `translate3d(${tx.toFixed(1)}px, ${ty.toFixed(1)}px, 0)`;
+      ring.style.opacity = grow > 0.02 ? "0" : "";
       const text = `x ${Math.round(cur.x)}  y ${Math.round(cur.y)}`;
       if (readoutRef.current && text !== lastReadout) {
         readoutRef.current.textContent = text;
@@ -177,12 +308,15 @@ export function Hero() {
       raf = 0;
       if (!visible) return;
       const idle = t - lastUser > 3500;
-      const drifting = idle && !reduced && t - driftStart < DRIFT_MS;
+      const drifting =
+        idle && !reduced && grow === 0 && t - driftStart < DRIFT_MS;
       if (drifting) {
         // A slow figure-eight, easing to rest after a few seconds so an idle page goes quiet.
         const fade = Math.min(1, (DRIFT_MS - (t - driftStart)) / 2000);
         target.x = rest.x + Math.sin(t * 0.00042) * w * 0.14 * fade;
-        target.y = rest.y + Math.sin(t * 0.00077) * Math.min(h * 0.08, 60, radius * 0.3) * fade;
+        target.y =
+          rest.y +
+          Math.sin(t * 0.00077) * Math.min(h * 0.08, 60, radius * 0.3) * fade;
       } else if (idle) {
         target = { ...rest };
       }
@@ -190,7 +324,8 @@ export function Hero() {
       cur.x += (target.x - cur.x) * k;
       cur.y += (target.y - cur.y) * k;
       apply();
-      const settled = Math.abs(target.x - cur.x) < 0.15 && Math.abs(target.y - cur.y) < 0.15;
+      const settled =
+        Math.abs(target.x - cur.x) < 0.15 && Math.abs(target.y - cur.y) < 0.15;
       if (!settled || drifting) raf = requestAnimationFrame(loop);
     };
     const kick = () => {
@@ -198,11 +333,28 @@ export function Hero() {
     };
 
     const onPointer = (e: PointerEvent) => {
+      if (grow > 0) return;
       const r = hero.getBoundingClientRect();
       target = { x: e.clientX - r.left, y: e.clientY - r.top };
       lastUser = performance.now();
       driftStart = lastUser + 3500;
       kick();
+    };
+
+    // Map scroll through the hero to lens growth. Starts after a little scroll and
+    // completes while the lower part of the hero is still on screen, so the page
+    // visibly becomes the blueprint that the manifesto is drawn on.
+    const onScroll = () => {
+      if (reduced) return;
+      const r = hero.getBoundingClientRect();
+      const p = Math.min(1, Math.max(0, (-r.top / r.height - 0.04) / 0.5));
+      if (p !== grow) {
+        grow = p;
+        hero.dataset.grow = p > 0 ? "true" : "false";
+        if (p > 0) hero.dataset.lens = "on";
+        kick();
+        apply();
+      }
     };
 
     measure();
@@ -217,7 +369,7 @@ export function Hero() {
         driftStart = performance.now();
         kick();
       },
-      reduced ? 0 : 1500,
+      reduced ? 0 : Math.max(0, 2100 - performance.now()),
     );
 
     const ro = new ResizeObserver(() => {
@@ -233,6 +385,8 @@ export function Hero() {
 
     hero.addEventListener("pointermove", onPointer, { passive: true });
     hero.addEventListener("pointerdown", onPointer, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
 
     return () => {
       window.clearTimeout(openTimer);
@@ -241,11 +395,16 @@ export function Hero() {
       io.disconnect();
       hero.removeEventListener("pointermove", onPointer);
       hero.removeEventListener("pointerdown", onPointer);
+      window.removeEventListener("scroll", onScroll);
     };
   }, []);
 
   return (
-    <section ref={heroRef} className="hero surface-vellum" aria-labelledby="hero-title">
+    <section
+      ref={heroRef}
+      className="hero surface-vellum"
+      aria-labelledby="hero-title"
+    >
       <HeroContent />
       <div ref={lensRef} className="lens" aria-hidden="true">
         <div ref={drawingRef} className="hero-blueprint blueprint-grid" inert>

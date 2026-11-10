@@ -61,16 +61,34 @@ const organizationJsonLd = {
   email: site.email,
   description: site.description,
   slogan: site.tagline,
-  address: { "@type": "PostalAddress", addressLocality: site.location.city, addressCountry: site.location.country },
+  address: {
+    "@type": "PostalAddress",
+    addressLocality: site.location.city,
+    addressCountry: site.location.country,
+  },
   areaServed: "Worldwide",
   sameAs: site.socials.map((s) => s.href),
-  knowsAbout: ["Web design", "Web development", "E-commerce", "UX design", "Frontend performance"],
+  knowsAbout: [
+    "Web design",
+    "Web development",
+    "E-commerce",
+    "UX design",
+    "Frontend performance",
+  ],
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   // Newsreader is declared in globals.css so only the roman face is preloaded;
   // the italic loads on demand. Both are instanced and subset to about 50 KB each.
-  preload("/fonts/newsreader-text-normal-v1.woff2", { as: "font", type: "font/woff2", crossOrigin: "anonymous" });
+  preload("/fonts/newsreader-text-normal-v1.woff2", {
+    as: "font",
+    type: "font/woff2",
+    crossOrigin: "anonymous",
+  });
   return (
     <html lang="en-GB" className={archivo.variable}>
       <body>
@@ -85,7 +103,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <GridOverlay />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(organizationJsonLd),
+          }}
         />
       </body>
     </html>

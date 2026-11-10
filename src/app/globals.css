@@ -23,6 +23,7 @@
 
   --ease-settle: cubic-bezier(0.2, 0.7, 0.1, 1);
   --ease-draw: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-pour: cubic-bezier(0.45, 0.05, 0.2, 1);
 
   --breakpoint-xs: 30rem;
 }
@@ -59,6 +60,7 @@
 }
 
 :root {
+  --tempo: 0.85;
   --font-newsreader: "Newsreader", "Newsreader Fallback";
   --gx: clamp(1rem, 4vw, 3.5rem);
   --gap: clamp(0.75rem, 1.6vw, 1.5rem);
@@ -101,8 +103,6 @@
     outline-offset: 3px;
     border-radius: 1px;
   }
-
-
 }
 
 @layer components {
@@ -155,7 +155,11 @@
       linear-gradient(90deg, var(--chalk-a) 1px, transparent 1px),
       linear-gradient(var(--chalk-b) 1px, transparent 1px),
       linear-gradient(90deg, var(--chalk-b) 1px, transparent 1px);
-    background-size: 80px 80px, 80px 80px, 16px 16px, 16px 16px;
+    background-size:
+      80px 80px,
+      80px 80px,
+      16px 16px,
+      16px 16px;
     background-position: -1px -1px;
   }
 
@@ -249,8 +253,12 @@
     background-image:
       linear-gradient(currentColor, currentColor),
       linear-gradient(var(--line-a), var(--line-a));
-    background-size: 0% 1px, 100% 1px;
-    background-position: 0 100%, 0 100%;
+    background-size:
+      0% 1px,
+      100% 1px;
+    background-position:
+      0 100%,
+      0 100%;
     background-repeat: no-repeat;
     transition: background-size 0.55s var(--ease-settle);
     padding-bottom: 0.08em;
@@ -258,7 +266,9 @@
   .link-draw:hover,
   .link-draw:focus-visible,
   .link-draw[aria-current="page"] {
-    background-size: 100% 1px, 100% 1px;
+    background-size:
+      100% 1px,
+      100% 1px;
   }
   .surface-prussian .link-draw,
   .surface-ink .link-draw {
@@ -288,7 +298,9 @@
     border-radius: 0;
     isolation: isolate;
     overflow: hidden;
-    transition: color 0.45s var(--ease-settle), border-color 0.45s var(--ease-settle);
+    transition:
+      color 0.45s var(--ease-settle),
+      border-color 0.45s var(--ease-settle);
     touch-action: manipulation;
     cursor: pointer;
   }
@@ -357,7 +369,9 @@
     border-color: currentColor;
     border-style: solid;
     opacity: 0;
-    transition: opacity 0.3s var(--ease-settle), transform 0.4s var(--ease-settle);
+    transition:
+      opacity 0.3s var(--ease-settle),
+      transform 0.4s var(--ease-settle);
   }
   .crop::before {
     top: -0.3rem;
@@ -386,7 +400,10 @@
     inset: 0 0 auto 0;
     z-index: 50;
     height: var(--nav-h);
-    transition: transform 0.5s var(--ease-settle), background-color 0.4s var(--ease-settle), color 0.4s;
+    transition:
+      transform 0.5s var(--ease-settle),
+      background-color 0.4s var(--ease-settle),
+      color 0.4s;
   }
   .site-header[data-hidden="true"] {
     transform: translateY(-100%);
@@ -453,18 +470,24 @@
     flex-direction: column;
     clip-path: inset(0 0 100% 0);
     visibility: hidden;
-    transition: clip-path 0.7s var(--ease-settle), visibility 0s linear 0.7s;
+    transition:
+      clip-path 0.7s var(--ease-settle),
+      visibility 0s linear 0.7s;
   }
   .menu-panel[data-open="true"] {
     clip-path: inset(0 0 0 0);
     visibility: visible;
-    transition: clip-path 0.7s var(--ease-settle), visibility 0s;
+    transition:
+      clip-path 0.7s var(--ease-settle),
+      visibility 0s;
   }
   .menu-link {
     display: block;
     transform: translateY(1.2em);
     opacity: 0;
-    transition: transform 0.7s var(--ease-settle), opacity 0.5s var(--ease-settle);
+    transition:
+      transform 0.7s var(--ease-settle),
+      opacity 0.5s var(--ease-settle);
     transition-delay: calc(var(--i, 0) * 60ms + 120ms);
   }
   .menu-panel[data-open="true"] .menu-link {
@@ -522,6 +545,7 @@
     top: 0;
     display: flex;
     flex-direction: column;
+    transform-origin: 0 0;
     will-change: transform;
   }
 
@@ -544,6 +568,9 @@
     padding-left: 0.5em;
   }
   @media (min-width: 48rem) {
+    :root {
+      --tempo: 1;
+    }
     .hero {
       --hero-size: clamp(3rem, 12.2vw, 15.5rem);
     }
@@ -552,14 +579,197 @@
     }
   }
 
-  /* The headline is painted on the first frame as a drawing, then inked in.
-     Nothing is hidden, so the largest paint happens immediately. */
+  /* ------------------------------------------------------------------
+     The entrance, in four acts. Every delay is scaled by --tempo so
+     phones get a slightly quicker cut.
+     1. Setting out: crop marks, guides, dimension lines (0 to 0.6 s)
+     2. Formwork: the outlines trace themselves (0.2 to 1.1 s)
+     3. The pour: ink rises from the baseline (0.9 to 1.9 s)
+     4. The strike: outlines and measurements lift away (1.9 s on)
+     The text is painted on the first frame as a faint pencil outline,
+     so the largest paint is never held back by the animation.
+     ------------------------------------------------------------------ */
+  .hero-word {
+    position: relative;
+    z-index: 1;
+    display: inline-block;
+  }
+
+  /* The real headline text. It starts as a faint pencil outline (so the largest
+     paint happens on the first frame) and becomes solid ink in a single step
+     the moment the pour above it completes. */
   .hero-ink {
     position: relative;
     z-index: 1;
     display: inline-block;
-    animation: ink-in 1.1s var(--ease-settle) both;
-    animation-delay: calc(var(--i, 0) * 120ms + 260ms);
+    color: transparent;
+    -webkit-text-stroke: 1px rgb(95 168 211 / 0.5);
+    animation: ink-set 1ms linear forwards;
+    animation-delay: calc((var(--i, 0) * 140ms + 1900ms) * var(--tempo));
+  }
+
+  /* The pour: an ink copy of the line, revealed from the baseline up by a window
+     that rises while its contents counter-move. Transforms only, so it runs on
+     the compositor and never repaints the headline. The window's top edge is
+     masked into a meniscus wave. */
+  .pour {
+    position: absolute;
+    left: -0.04em;
+    right: -0.04em;
+    top: -0.2em;
+    height: 1.4em;
+    overflow: hidden;
+    pointer-events: none;
+    user-select: none;
+    z-index: 2;
+    -webkit-mask:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 8' preserveAspectRatio='none'%3E%3Cpath d='M0 8V4Q10 0 20 4T40 4V8Z'/%3E%3C/svg%3E")
+        0 0 / 0.55em 0.12em repeat-x,
+      linear-gradient(#000, #000) 0 0.115em / 100% 100% no-repeat;
+    mask:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 8' preserveAspectRatio='none'%3E%3Cpath d='M0 8V4Q10 0 20 4T40 4V8Z'/%3E%3C/svg%3E")
+        0 0 / 0.55em 0.12em repeat-x,
+      linear-gradient(#000, #000) 0 0.115em / 100% 100% no-repeat;
+    transform: translateY(100%);
+    will-change: transform;
+  }
+  .pour > span {
+    display: block;
+    height: 100%;
+    padding: 0.2em 0.04em 0;
+    color: var(--color-ink);
+    white-space: nowrap;
+    transform: translateY(-100%);
+    animation: pour-contents calc(1s * var(--tempo)) var(--ease-pour) both;
+    animation-delay: calc((var(--i, 0) * 140ms + 900ms) * var(--tempo));
+    will-change: transform;
+  }
+  /* Once poured, the window's job is done; the real text is ink underneath. */
+  .pour {
+    animation:
+      pour-window calc(1s * var(--tempo)) var(--ease-pour) both,
+      vanish 1ms linear forwards;
+    animation-delay:
+      calc((var(--i, 0) * 140ms + 900ms) * var(--tempo)),
+      calc((var(--i, 0) * 140ms + 1950ms) * var(--tempo));
+  }
+
+  .trace {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+    user-select: none;
+    z-index: 2;
+  }
+  .trace text {
+    fill: none;
+    stroke: #2c6f99;
+    stroke-width: 1.6px;
+    stroke-linejoin: round;
+    stroke-dasharray: 5.5em 5.5em;
+    stroke-dashoffset: 5.5em;
+    animation:
+      trace calc(950ms * var(--tempo)) var(--ease-draw) both,
+      strike calc(600ms * var(--tempo)) var(--ease-settle) forwards;
+    animation-delay:
+      calc((var(--i, 0) * 120ms + 200ms) * var(--tempo)),
+      calc((var(--i, 0) * 60ms + 1850ms) * var(--tempo));
+  }
+
+  .dim {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0.035em;
+    height: 1px;
+    background: var(--color-redline);
+    transform-origin: left center;
+    pointer-events: none;
+    z-index: 2;
+    animation:
+      draw calc(700ms * var(--tempo)) var(--ease-draw) both,
+      strike calc(500ms * var(--tempo)) var(--ease-settle) forwards;
+    animation-delay:
+      calc((var(--i, 0) * 100ms + 150ms) * var(--tempo)),
+      calc((var(--i, 0) * 60ms + 1800ms) * var(--tempo));
+  }
+  .dim::before,
+  .dim::after {
+    content: "";
+    position: absolute;
+    top: -5px;
+    width: 1px;
+    height: 11px;
+    background: var(--color-redline);
+  }
+  .dim::before {
+    left: 0;
+  }
+  .dim::after {
+    right: 0;
+  }
+  .dim-label {
+    position: absolute;
+    left: 50%;
+    top: -0.55rem;
+    translate: -50% 0;
+    padding: 0.1rem 0.4rem;
+    background: var(--color-vellum);
+    border: 1px solid var(--color-redline);
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 560;
+    font-stretch: 100%;
+    letter-spacing: 0.02em;
+    line-height: 1.3;
+    color: var(--color-ink);
+    -webkit-text-stroke: 0;
+    white-space: nowrap;
+    animation: fade-up calc(400ms * var(--tempo)) var(--ease-settle) both;
+    animation-delay: calc((var(--i, 0) * 100ms + 380ms) * var(--tempo));
+  }
+
+  .crop-marks > span {
+    position: absolute;
+    width: 1.1rem;
+    height: 1.1rem;
+    border: 0 solid var(--color-ink);
+    pointer-events: none;
+    animation:
+      snap calc(450ms * var(--tempo)) var(--ease-settle) both,
+      strike calc(500ms * var(--tempo)) var(--ease-settle) forwards;
+    animation-delay: calc(40ms * var(--tempo)), calc(1900ms * var(--tempo));
+  }
+  .crop-marks > [data-c="tl"] {
+    left: -0.9rem;
+    top: -0.7rem;
+    border-width: 1.5px 0 0 1.5px;
+  }
+  .crop-marks > [data-c="tr"] {
+    right: 0;
+    top: -0.7rem;
+    border-width: 1.5px 1.5px 0 0;
+  }
+  .crop-marks > [data-c="bl"] {
+    left: -0.9rem;
+    bottom: -0.9rem;
+    border-width: 0 0 1.5px 1.5px;
+  }
+  .crop-marks > [data-c="br"] {
+    right: 0;
+    bottom: -0.9rem;
+    border-width: 0 1.5px 1.5px 0;
+  }
+  /* On wide screens the copy sits inside the headline block, so the marks frame both. */
+  @media (max-width: 79.99rem) {
+    .crop-marks > [data-c="bl"],
+    .crop-marks > [data-c="br"] {
+      display: none;
+    }
   }
 
   /* Construction guides: baseline, x-height, cap height, measured from Archivo's metrics. */
@@ -570,8 +780,8 @@
     height: 1px;
     background: var(--line-a);
     transform-origin: left center;
-    animation: draw 1.2s var(--ease-draw) both;
-    animation-delay: calc(var(--i, 0) * 110ms + var(--g, 0ms));
+    animation: draw calc(1.1s * var(--tempo)) var(--ease-draw) both;
+    animation-delay: calc((var(--i, 0) * 110ms + var(--g, 0ms)) * var(--tempo));
     pointer-events: none;
   }
   .guide[data-g="cap"] {
@@ -693,6 +903,7 @@
   }
   .is-blueprint .hero-ink {
     color: transparent;
+    background: none;
     -webkit-text-stroke: 1.25px var(--color-chalk);
     animation: none;
     outline: 1px dashed rgb(212 230 245 / 0.32);
@@ -915,7 +1126,9 @@
     letter-spacing: -0.03em;
     line-height: 1;
     font-size: clamp(1.6rem, 4.2vw, 4.4rem);
-    transition: font-stretch 0.6s var(--ease-settle), color 0.3s;
+    transition:
+      font-stretch 0.6s var(--ease-settle),
+      color 0.3s;
   }
   @media (min-width: 48rem) {
     .service-trigger:focus-visible .service-title,
@@ -967,15 +1180,32 @@
      Process drawing
      -------------------------------------------------------------------------- */
 
-  .proc-svg * {
+  .proc-marker {
+    position: absolute;
+    top: 50%;
+    left: calc(-1.6rem - 6px);
+    width: 12px;
+    height: 12px;
+    translate: 0 -50%;
+    border: 1.5px solid var(--color-chalk);
+    background: var(--color-prussian);
     transition:
-      transform 1s var(--ease-settle),
-      opacity 0.7s var(--ease-settle),
-      fill 0.7s var(--ease-settle),
-      stroke 0.7s var(--ease-settle),
-      stroke-dashoffset 1s var(--ease-draw),
-      rx 0.8s var(--ease-settle);
-    transform-box: fill-box;
+      background-color 0.4s var(--ease-settle),
+      border-color 0.4s var(--ease-settle),
+      scale 0.4s var(--ease-settle);
+  }
+  .proc-marker[data-state="done"] {
+    background: var(--color-chalk);
+  }
+  .proc-marker[data-state="active"] {
+    background: var(--color-redline);
+    border-color: var(--color-redline);
+    scale: 1.25;
+  }
+  @media (min-width: 64rem) {
+    .proc-marker {
+      left: calc(-2.1rem - 6px);
+    }
   }
 
   .proc-dim {
@@ -1000,7 +1230,9 @@
       0 1px 0 rgb(21 21 21 / 0.06),
       0 14px 28px -18px rgb(21 21 21 / 0.35);
     rotate: var(--r, 0deg);
-    transition: rotate 0.6s var(--ease-settle), translate 0.6s var(--ease-settle);
+    transition:
+      rotate 0.6s var(--ease-settle),
+      translate 0.6s var(--ease-settle);
   }
   .note-card::before {
     content: "";
@@ -1073,6 +1305,80 @@
   }
 
   /* --------------------------------------------------------------------------
+     Contact: the route from brief to proposal
+     -------------------------------------------------------------------------- */
+
+  .brief-route > li {
+    --node: 13px;
+  }
+  .brief-route-node {
+    position: absolute;
+    left: 0;
+    top: 0.15rem;
+    width: var(--node);
+    height: var(--node);
+    border: 1.5px solid var(--color-ink);
+    background: var(--color-vellum);
+    transition:
+      background-color 0.4s var(--ease-settle),
+      border-color 0.4s var(--ease-settle);
+  }
+  .brief-route > li[data-state="next"] .brief-route-node {
+    border-color: var(--color-redline);
+    background: var(--color-redline);
+    animation: node-pulse 2.2s var(--ease-settle) infinite;
+  }
+  .brief-route > li[data-state="done"] .brief-route-node {
+    background: var(--color-ink);
+  }
+  /* Connector from each node to the next: dashed until that leg is done. */
+  .brief-route > li:not(:last-of-type)::before {
+    content: "";
+    position: absolute;
+    left: calc(var(--node) / 2 - 0.5px);
+    top: calc(0.15rem + var(--node) + 4px);
+    bottom: calc(-2rem + 4px);
+    width: 1px;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgb(21 21 21 / 0.4) 0 4px,
+      transparent 4px 8px
+    );
+  }
+  .brief-route.space-y-5 > li:not(:last-of-type)::before {
+    bottom: calc(-1.25rem + 4px);
+  }
+  .brief-route > li[data-state="done"]::before {
+    background: var(--color-ink);
+    transform-origin: top;
+    animation: draw-down 0.8s var(--ease-draw) both;
+  }
+
+  /* The brief, gliding along the route while it's being written. */
+  .brief-route-runner {
+    position: absolute;
+    left: 0;
+    top: 0.15rem;
+    bottom: 0;
+    width: 13px;
+    pointer-events: none;
+    animation: route-run 7s var(--ease-draw) infinite 1s;
+  }
+  .brief-route-runner > span {
+    position: absolute;
+    left: 1px;
+    top: 0;
+    width: 11px;
+    height: 13px;
+    background: var(--color-redline);
+    clip-path: polygon(0 0, 65% 0, 100% 30%, 100% 100%, 0 100%);
+    box-shadow: 0 0 0 2px var(--color-vellum);
+  }
+  .brief-route[data-sent="true"] .brief-route-runner {
+    display: none;
+  }
+
+  /* --------------------------------------------------------------------------
      Form controls
      -------------------------------------------------------------------------- */
 
@@ -1098,7 +1404,9 @@
     border-bottom: 1px solid rgb(21 21 21 / 0.35);
     padding: 0.65rem 0 0.6rem;
     border-radius: 0;
-    transition: border-color 0.3s, box-shadow 0.3s;
+    transition:
+      border-color 0.3s,
+      box-shadow 0.3s;
   }
   .field-input::placeholder {
     color: rgb(21 21 21 / 0.45);
@@ -1151,7 +1459,10 @@
     font-size: 0.95rem;
     font-weight: 560;
     font-stretch: 100%;
-    transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+    transition:
+      background-color 0.3s,
+      color 0.3s,
+      border-color 0.3s;
   }
   .chip input:hover + span {
     border-color: var(--color-ink);
@@ -1165,7 +1476,6 @@
     outline: 2px solid var(--color-redline);
     outline-offset: 3px;
   }
-
 
   /* Whole-card click target without nesting interactive elements. */
   .stretch::after {
@@ -1186,21 +1496,61 @@
     padding: 0.2rem 0.5rem;
     border: 1px dashed currentColor;
   }
-
 }
 
 /* --------------------------------------------------------------------------
    Keyframes
    -------------------------------------------------------------------------- */
 
-@keyframes ink-in {
+@keyframes pour-window {
   from {
-    color: rgb(21 21 21 / 0);
-    -webkit-text-stroke: 1.5px var(--color-line);
+    transform: translateY(100%);
   }
   to {
-    color: rgb(21 21 21 / 1);
-    -webkit-text-stroke: 1.5px rgb(95 168 211 / 0);
+    transform: translateY(0);
+  }
+}
+@keyframes pour-contents {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes ink-set {
+  to {
+    color: var(--color-ink);
+    -webkit-text-stroke-color: transparent;
+  }
+}
+@keyframes vanish {
+  to {
+    visibility: hidden;
+  }
+}
+
+@keyframes trace {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes strike {
+  to {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes snap {
+  from {
+    opacity: 0;
+    scale: 1.8;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
   }
 }
 
@@ -1252,7 +1602,6 @@
   }
 }
 
-
 /* --------------------------------------------------------------------------
    Reduced motion: keep every state, drop the travel
    -------------------------------------------------------------------------- */
@@ -1267,11 +1616,11 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  .page-sheet {
+  .page-sheet,
+  .brief-route-runner {
     display: none;
   }
   .scroll-cue-line::after {
     transform: scaleY(1);
   }
 }
-
